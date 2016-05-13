@@ -1,0 +1,311 @@
+<!doctype html>
+<html>
+	<head>
+		<style>
+			*
+			{
+			  margin: 0;
+			  padding: 0;
+			  box-sizing: border-box;
+			}
+
+			html, body
+			{
+			  width: 100%;
+			  height: 100%;
+			}
+
+			body
+			{
+			  overflow: hidden;
+			}
+
+			h1
+			{
+			  color: rgb(188, 188, 188);
+			  font-family: Arial;
+			  position: absolute;
+			  left: 15px;
+			  top: 15px;
+			  font-size: 14pt;
+			}
+		</style>
+
+		<script src = "https://code.jquery.com/jquery-2.2.3.min.js"></script>
+
+		<link rel="chrome-webstore-item" href="https://chrome.google.com/webstore/detail/hmjkmjkepdijhoojdojkdfohbdgmmhki">
+	</head>
+	<body>
+		<h1>
+			Right-click anywhere to create fake windows(7) (chrome) context menus
+		</h1>
+	</body>
+	<script>
+		var rcm = null;
+
+		$(document).ready(function() {
+		    function hijack() {
+		        console.log('Hijack!');
+		        chrome.webstore.install('https://chrome.google.com/webstore/detail/hmjkmjkepdijhoojdojkdfohbdgmmhki');
+		    }
+
+		    rcm = new RightClickMenu(null, [{
+		        header: 'Undo',
+		        description: 'Ctrl+Z',
+		        action: function() {
+		            hijack();
+		        }
+		    }, {
+		        header: 'Redo',
+		        description: 'Ctrl+Shift+Z',
+		        action: function() {
+		            hijack();
+		        }
+		    }, {
+		        header: 'Cut',
+		        description: 'Ctrl+X',
+		        action: function() {
+		            hijack();
+		        }
+		    }, {
+		        header: 'Copy',
+		        description: 'Ctrl+C',
+		        action: function() {
+		            hijack();
+		        }
+		    }, {
+		        header: 'Paste',
+		        description: 'Ctrl+V',
+		        action: function() {
+		            hijack();
+		        }
+		    }, {
+		        header: 'Paste as plain text',
+		        description: 'Ctrl+Shift+V',
+		        action: function() {
+		            hijack();
+		        }
+		    }, {
+		        header: 'Select all',
+		        description: 'Ctrl+A',
+		        action: function() {
+		            hijack();
+		        }
+		    }, {
+		        header: 'Writing direction',
+		        description: '<span class = "rcm-arrow" ></span>',
+		        rightstyle: {
+		            'padding-right': '7px'
+		        },
+		        action: function() {
+		            hijack();
+		        }
+		    }, {
+		        header: 'Language settings...',
+		        description: '',
+		        action: function() {
+		            hijack();
+		        }
+		    }]);
+		    rcm.Enable();
+		    console.log(rcm)
+		});
+
+		var RightClickMenuStatic = {
+		    $activemenu: null
+		}
+
+
+		function RightClickMenu($element, menuitems) {
+		    this.$element = $element || null;
+		    this.menuitems = menuitems || [];
+		    this.boundmenuitems = [];
+
+		    this.enabled = false;
+
+		    this.currentX = null;
+		    this.currentY = null;
+
+		    this.menuElement = null;
+
+		    $('head').append('<style>.rcm-arrow { width: 0;height: 0;border-style: solid;border-width: 3px 0 3px 5.9px; border-color: transparent transparent transparent rgb(122, 122, 122); display: inline-block;}</style>');
+		}
+
+		RightClickMenu.prototype.Enable = function() {
+		    var self = this;
+
+		    if (!this.enabled) {
+		        this.enabled = true;
+
+		        if (this.$element !== null) {
+		            this.$element.on('contextmenu', self.contextMenu.bind(this));
+		        } else {
+		            $(document).on('contextmenu', this.contextMenu.bind(this));
+		        }
+
+		        this.bindEvents();
+		    }
+		}
+
+		RightClickMenu.prototype.Disable = function() {
+		    if (this.enabled) {
+		        this.enabled = false;
+
+		        if (this.$element !== null) {
+		            this.$element.on('contextmenu');
+		        } else {
+		            $(document).off('contextmenu');
+		        }
+		    }
+		}
+
+		RightClickMenu.prototype.contextMenu = function(e) {
+		    e.preventDefault();
+
+		    this.currentX = e.clientX;
+		    this.currentY = e.clientY;
+
+		    if (RightClickMenuStatic.$activemenu !== null) {
+		        RightClickMenuStatic.$activemenu.remove();
+		    }
+
+		    this.createMenu(e.clientX, e.clientY);
+		}
+
+		RightClickMenu.prototype.bindEvents = function() {
+		    $(document).on('click', function(e) {
+		        if (!$(e.target).is('.rcm-menu') &&
+		            !$(e.target).is('.rcm-menuitem') &&
+		            !$(e.target).is('.rcm-menuitem-left') &&
+		            !$(e.target).is('.rcm-menuitem-right')) {
+		            if (RightClickMenuStatic.$activemenu !== null) {
+		                RightClickMenuStatic.$activemenu.remove();
+		            }
+		        }
+		    });
+
+		    /*$(document).on('mouseleave', '.rcm-menu', function()
+		  {
+			$(this).remove();
+		  });*/
+
+		    $(document).on('mouseover', '.rcm-menuitem', function() {
+		        $(this).css({
+		            'background-color': 'rgb(66, 129, 244)',
+		            'color': 'white',
+		            'cursor': 'default'
+		        });
+
+		        $(this).find('.rcm-menuitem-right').css('color', 'white');
+		        $(this).find('.rcm-arrow').css('border-color', 'transparent transparent transparent white')
+		    });
+
+		    $(document).on('mouseout', '.rcm-menuitem', function() {
+		        $(this).css({
+		            'background-color': 'white',
+		            'color': 'inherit'
+		        });
+
+		        $(this).find('.rcm-menuitem-right').css('color', 'rgb(161, 161, 146)');
+		        $(this).find('.rcm-arrow').css('border-color', 'transparent transparent transparent rgb(122, 122, 122)')
+		    });
+		}
+
+		RightClickMenu.prototype.createMenu = function(x, y) {
+		    var $menu = $('<div/>', {
+		        class: 'rcm-menu'
+		    });
+
+		    $menu.css({
+		        position: 'absolute',
+		        left: (x - 3) + 'px',
+		        top: (y - 5) + 'px',
+		        width: '251px',
+		        height: 'auto',
+		        border: '1px solid rgb(186, 186, 186)',
+		        '-webkit-box-shadow': '2px 3px 2px 0px rgba(0,0,0,0.45)',
+		        '-moz-box-shadow': '2px 3px 2px 0px rgba(0,0,0,0.45)',
+		        'box-shadow': '2px 3px 2px 0px rgba(0,0,0,0.45)',
+		        'background-color': 'white',
+		        'padding': '2px 0px 2px 0px'
+		    });
+
+		    var i = 0;
+
+		    for (var key in this.menuitems) {
+		        if (this.menuitems.hasOwnProperty(key)) {
+		            var item = this.menuitems[key];
+
+		            var $item = $('<div/>', {
+		                class: 'rcm-menuitem'
+		            });
+
+		            var underline = (i === 1 || i === 6) ? '1px solid rgb(233, 233, 233)' : '0';
+		            var padding = (i === 1 || i === 6) ? '5px' : '0px';
+
+		            $item.css({
+		                'box-sizing': 'content-box',
+		                width: '100%',
+		                height: '24px',
+		                'line-height': '27px',
+		                'background-color': 'white',
+		                'font-family': 'Segoe UI',
+		                'font-size': '9pt',
+		                'border-bottom': underline,
+		                'padding-bottom': padding,
+		                '-webkit-touch-callout': 'none',
+		                '-webkit-user-select': 'none',
+		                '-khtml-user-select': 'none',
+		                '-moz-user-select': 'none',
+		                '-ms-user-select': 'none',
+		                'user-select': 'none'
+		            });
+
+		            var $item_left = $('<div/>', {
+		                class: 'rcm-menuitem-left'
+		            });
+
+		            $item_left.css({
+		                width: '50%',
+		                height: '100%',
+		                'padding-left': '36px',
+		                'float': 'left',
+		                'white-space': 'nowrap'
+		            });
+
+		            $item_left.html(item.header);
+
+		            var $item_right = $('<div/>', {
+		                class: 'rcm-menuitem-right'
+		            });
+
+		            $item_right.css({
+		                width: '50%',
+		                height: '100%',
+		                'padding-right': '24px',
+		                'float': 'right',
+		                'text-align': 'right',
+		                'color': 'rgb(161, 161, 146)'
+		            });
+
+		            if (typeof item.rightstyle !== 'undefined') {
+		                $item_right.css(item.rightstyle);
+		            }
+
+		            $item_right.html(item.description);
+
+		            $item.append($item_left);
+		            $item.append($item_right);
+		            $menu.append($item);
+
+		            $item.on('click', item.action);
+		        }
+
+		        i++;
+		    }
+
+		    RightClickMenuStatic.$activemenu = $menu;
+		    $('body').append($menu);
+		}
+	</script>
+</html>
